@@ -460,6 +460,10 @@ export function getAllTokens(state) {
   return state.metamask.allTokens;
 }
 
+export function getAllDomains(state) {
+  return state.metamask.domains;
+}
+
 export const getConfirmationExchangeRates = (state) => {
   return state.metamask.confirmationExchangeRates;
 };
