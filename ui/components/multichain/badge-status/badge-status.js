@@ -18,18 +18,75 @@ import {
   BadgeWrapper,
   Box,
 } from '../../component-library';
-import { getUseBlockie } from '../../../selectors';
+import {
+  getAddressConnectedSubjectMap,
+  getOrderedConnectedAccountsForActiveTab,
+  getOriginOfCurrentTab,
+  getPermissionsForActiveTab,
+  getUseBlockie,
+} from '../../../selectors';
 import Tooltip from '../../ui/tooltip';
+import { WALLET_SNAP_PERMISSION_KEY } from '@metamask/snaps-rpc-methods';
+import {
+  STATUS_CONNECTED,
+  STATUS_CONNECTED_TO_ANOTHER_ACCOUNT,
+  STATUS_CONNECTED_TO_SNAP,
+  STATUS_NOT_CONNECTED,
+} from '../../../helpers/constants/connected-sites';
+import { findKey } from 'lodash';
 
-export const BadgeStatus = ({
-  className = '',
-  badgeBackgroundColor = Color.borderMuted,
-  badgeBorderColor = BackgroundColor.backgroundDefault,
-  address,
-  isConnectedAndNotActive = false,
-  text,
-}) => {
+export const BadgeStatus = ({ className = '', address, text }) => {
   const useBlockie = useSelector(getUseBlockie);
+  const permissionsForActiveTab = useSelector(getPermissionsForActiveTab);
+  const connectedAccounts = useSelector(
+    getOrderedConnectedAccountsForActiveTab,
+  );
+
+  const activeWalletSnap = permissionsForActiveTab
+    .map((permission) => permission.key)
+    .includes(WALLET_SNAP_PERMISSION_KEY);
+
+  const addressConnectedSubjectMap = useSelector(getAddressConnectedSubjectMap);
+  const originOfCurrentTab = useSelector(getOriginOfCurrentTab);
+
+  const selectedAddressSubjectMap = addressConnectedSubjectMap[address];
+  const currentTabIsConnectedToSelectedAddress = Boolean(
+    selectedAddressSubjectMap && selectedAddressSubjectMap[originOfCurrentTab],
+  );
+  const isConnectedAndNotActive =
+    findKey(addressConnectedSubjectMap, originOfCurrentTab) === address;
+
+let isActive = false;
+
+for (let i = 0; i < connectedAccounts.length; i++) {
+  if (connectedAccounts[i].address === address) {
+    isActive = i === 0;
+    break; // No need to continue searching once found
+  }
+}
+    let status;
+    if (currentTabIsConnectedToSelectedAddress) {
+      status = STATUS_CONNECTED;
+    } else if (isActive) {
+      status = STATUS_CONNECTED_TO_ANOTHER_ACCOUNT;
+    } else if (activeWalletSnap) {
+      status = STATUS_CONNECTED_TO_SNAP;
+    } else {
+      status = STATUS_NOT_CONNECTED;
+    }
+    console.log(isActive);
+  let badgeBorderColor = BackgroundColor.backgroundDefault;
+  let badgeBackgroundColor = Color.borderMuted;
+  if (status === STATUS_CONNECTED) {
+    badgeBorderColor = BackgroundColor.backgroundDefault;
+    badgeBackgroundColor = BackgroundColor.successDefault;
+  } else if (
+    status === STATUS_CONNECTED_TO_ANOTHER_ACCOUNT ||
+    status === STATUS_CONNECTED_TO_SNAP
+  ) {
+    badgeBorderColor = BorderColor.successDefault;
+    badgeBackgroundColor = BackgroundColor.backgroundDefault;
+  }
 
   return (
     <Box
@@ -87,21 +144,9 @@ BadgeStatus.propTypes = {
    */
   className: PropTypes.string,
   /**
-   * Border color based on the connection status
-   */
-  badgeBorderColor: PropTypes.string.isRequired,
-  /**
-   * Background Color of Badge
-   */
-  badgeBackgroundColor: PropTypes.string.isRequired,
-  /**
    * Connection status message on Tooltip
    */
   text: PropTypes.string,
-  /**
-   * To determine connection status
-   */
-  isConnectedAndNotActive: PropTypes.bool,
   /**
    * Address for AvatarAccount
    */
