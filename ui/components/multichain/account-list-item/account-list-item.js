@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
+import browser from 'webextension-polyfill';
 
 import { useSelector } from 'react-redux';
 import { toChecksumHexAddress } from '@metamask/controller-utils';
@@ -50,11 +51,14 @@ import { MetaMetricsContext } from '../../../contexts/metametrics';
 import {
   getCurrentNetwork,
   getNativeCurrencyImage,
+  getOriginOfCurrentTab,
   getUseBlockie,
 } from '../../../selectors';
 import { useAccountTotalFiatBalance } from '../../../hooks/useAccountTotalFiatBalance';
 import { TEST_NETWORKS } from '../../../../shared/constants/network';
 import { BadgeStatus } from '../badge-status/badge-status';
+import { getEnvironmentType } from '../../../../app/scripts/lib/util';
+import { ENVIRONMENT_TYPE_POPUP } from '../../../../shared/constants/app';
 
 const MAXIMUM_CURRENCY_DECIMALS = 3;
 const MAXIMUM_CHARACTERS_WITHOUT_TOOLTIP = 17;
@@ -69,14 +73,20 @@ export const AccountListItem = ({
   isPinned = false,
   showOptions = false,
   isHidden = false,
+  isActive = false,
 }) => {
   const t = useI18nContext();
   const [accountOptionsMenuOpen, setAccountOptionsMenuOpen] = useState(false);
   const [accountListItemMenuElement, setAccountListItemMenuElement] =
     useState();
+  const origin = useSelector(getOriginOfCurrentTab);
+
   const useBlockie = useSelector(getUseBlockie);
   const currentNetwork = useSelector(getCurrentNetwork);
-
+  const showBadge =
+    getEnvironmentType() === ENVIRONMENT_TYPE_POPUP &&
+    origin &&
+    origin !== browser.runtime.id;
   const setAccountListItemMenuRef = (ref) => {
     setAccountListItemMenuElement(ref);
   };
@@ -127,9 +137,21 @@ export const AccountListItem = ({
           backgroundColor={Color.primaryDefault}
         />
       )}
-      <BadgeStatus
-        address={identity.address}
-      />
+      {showBadge ? (
+        <BadgeStatus address={identity.address} isActive={isActive} />
+      ) : (
+        <AvatarAccount
+          borderColor={BorderColor.transparent}
+          size={Size.MD}
+          address={identity.address}
+          variant={
+            useBlockie
+              ? AvatarAccountVariant.Blockies
+              : AvatarAccountVariant.Jazzicon
+          }
+          marginInlineEnd={2}
+        />
+      )}
       <Box
         display={Display.Flex}
         flexDirection={FlexDirection.Column}
@@ -352,6 +374,10 @@ AccountListItem.propTypes = {
    * Represents hidden accounts
    */
   isHidden: PropTypes.bool,
+  /**
+   * Represents active accounts
+   */
+  isActive: PropTypes.bool,
 };
 
 AccountListItem.displayName = 'AccountListItem';

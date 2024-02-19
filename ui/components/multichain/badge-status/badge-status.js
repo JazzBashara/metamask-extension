@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import { useSelector } from 'react-redux';
+import { WALLET_SNAP_PERMISSION_KEY } from '@metamask/snaps-rpc-methods';
 import {
   AlignItems,
   BackgroundColor,
@@ -20,27 +21,23 @@ import {
 } from '../../component-library';
 import {
   getAddressConnectedSubjectMap,
-  getOrderedConnectedAccountsForActiveTab,
   getOriginOfCurrentTab,
   getPermissionsForActiveTab,
   getUseBlockie,
 } from '../../../selectors';
 import Tooltip from '../../ui/tooltip';
-import { WALLET_SNAP_PERMISSION_KEY } from '@metamask/snaps-rpc-methods';
 import {
   STATUS_CONNECTED,
   STATUS_CONNECTED_TO_ANOTHER_ACCOUNT,
   STATUS_CONNECTED_TO_SNAP,
   STATUS_NOT_CONNECTED,
 } from '../../../helpers/constants/connected-sites';
-import { findKey } from 'lodash';
+import { useI18nContext } from '../../../hooks/useI18nContext';
 
-export const BadgeStatus = ({ className = '', address, text }) => {
+export const BadgeStatus = ({ className = '', address, isActive = false }) => {
+  const t = useSelector(useI18nContext);
   const useBlockie = useSelector(getUseBlockie);
   const permissionsForActiveTab = useSelector(getPermissionsForActiveTab);
-  const connectedAccounts = useSelector(
-    getOrderedConnectedAccountsForActiveTab,
-  );
 
   const activeWalletSnap = permissionsForActiveTab
     .map((permission) => permission.key)
@@ -53,40 +50,33 @@ export const BadgeStatus = ({ className = '', address, text }) => {
   const currentTabIsConnectedToSelectedAddress = Boolean(
     selectedAddressSubjectMap && selectedAddressSubjectMap[originOfCurrentTab],
   );
-  const isConnectedAndNotActive =
-    findKey(addressConnectedSubjectMap, originOfCurrentTab) === address;
 
-let isActive = false;
-
-for (let i = 0; i < connectedAccounts.length; i++) {
-  if (connectedAccounts[i].address === address) {
-    isActive = i === 0;
-    break; // No need to continue searching once found
+  let status;
+  if (isActive) {
+    status = STATUS_CONNECTED;
+  } else if (currentTabIsConnectedToSelectedAddress) {
+    status = STATUS_CONNECTED_TO_ANOTHER_ACCOUNT;
+  } else if (activeWalletSnap) {
+    status = STATUS_CONNECTED_TO_SNAP;
+  } else {
+    status = STATUS_NOT_CONNECTED;
   }
-}
-    let status;
-    if (currentTabIsConnectedToSelectedAddress) {
-      status = STATUS_CONNECTED;
-    } else if (isActive) {
-      status = STATUS_CONNECTED_TO_ANOTHER_ACCOUNT;
-    } else if (activeWalletSnap) {
-      status = STATUS_CONNECTED_TO_SNAP;
-    } else {
-      status = STATUS_NOT_CONNECTED;
-    }
-    console.log(isActive);
+
   let badgeBorderColor = BackgroundColor.backgroundDefault;
   let badgeBackgroundColor = Color.borderMuted;
+  let tooltipText = t('statusNotConnected');
   if (status === STATUS_CONNECTED) {
     badgeBorderColor = BackgroundColor.backgroundDefault;
     badgeBackgroundColor = BackgroundColor.successDefault;
-  } else if (
-    status === STATUS_CONNECTED_TO_ANOTHER_ACCOUNT ||
-    status === STATUS_CONNECTED_TO_SNAP
-  ) {
+    tooltipText = t('active');
+  } else if (status === STATUS_CONNECTED_TO_ANOTHER_ACCOUNT) {
     badgeBorderColor = BorderColor.successDefault;
     badgeBackgroundColor = BackgroundColor.backgroundDefault;
+    tooltipText = t('tooltipSatusConnectedUpperCase');
   }
+
+  const connectedAndNotActive =
+    currentTabIsConnectedToSelectedAddress && !isActive;
 
   return (
     <Box
@@ -96,28 +86,28 @@ for (let i = 0; i < connectedAccounts.length; i++) {
       display={Display.Flex}
       alignItems={AlignItems.center}
       justifyContent={JustifyContent.center}
-      backgroundColor={BackgroundColor.backgroundDefault}
+      backgroundColor={BackgroundColor.transparent}
     >
       <Tooltip
-        title={text}
+        title={tooltipText}
         data-testid="multichain-badge-status__tooltip"
         position="bottom"
       >
         <BadgeWrapper
           positionObj={
-            isConnectedAndNotActive
+            connectedAndNotActive
               ? { bottom: 2, right: 5, zIndex: 1 }
               : { bottom: -1, right: 2, zIndex: 1 }
           }
           badge={
             <Box
               className={classNames('multichain-badge-status__badge', {
-                'not-connected': isConnectedAndNotActive,
+                'not-connected': connectedAndNotActive,
               })}
               backgroundColor={badgeBackgroundColor}
               borderRadius={BorderRadius.full}
               borderColor={badgeBorderColor}
-              borderWidth={isConnectedAndNotActive ? 2 : 4}
+              borderWidth={connectedAndNotActive ? 2 : 4}
             />
           }
         >
@@ -144,11 +134,11 @@ BadgeStatus.propTypes = {
    */
   className: PropTypes.string,
   /**
-   * Connection status message on Tooltip
-   */
-  text: PropTypes.string,
-  /**
    * Address for AvatarAccount
    */
   address: PropTypes.string.isRequired,
+  /**
+   * Boolean to determine active status
+   */
+  address: PropTypes.bool,
 };

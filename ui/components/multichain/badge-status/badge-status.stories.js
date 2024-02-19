@@ -1,6 +1,5 @@
 import React from 'react';
-import { BackgroundColor, BorderColor, Color } from '../../../helpers/constants/design-system';
-import { BadgeStatus } from "./badge-status";
+import { BadgeStatus } from './badge-status';
 
 export default {
   title: 'Components/Multichain/BadgeStatus',
@@ -12,13 +11,13 @@ export default {
     address: {
       control: 'text',
     },
-    isConnectedAndNotActive: {
+    isActive: {
       control: 'boolean',
     },
   },
   args: {
     address: '0x1',
-    text: 'Tooltip'
+    isActive: false,
   },
 };
 
@@ -27,5 +26,3 @@ const Template = (args) => {
 };
 
 export const DefaultStory = Template.bind({});
-
-
