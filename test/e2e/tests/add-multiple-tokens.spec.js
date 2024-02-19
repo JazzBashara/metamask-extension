@@ -49,7 +49,7 @@ describe('Multiple ERC20 Watch Asset', function () {
         // Create Token 2
         await driver.clickElement({ text: 'Create Token', tag: 'button' });
 
-        await driver.delay(1000);
+        await driver.delay(2000);
         await switchToNotificationWindow(driver);
 
         await driver.findClickableElement({ text: 'Confirm', tag: 'button' });
@@ -68,7 +68,7 @@ describe('Multiple ERC20 Watch Asset', function () {
         // Create Token 3
         await driver.clickElement({ text: 'Create Token', tag: 'button' });
 
-        await driver.delay(1000);
+        await driver.delay(2000);
         await switchToNotificationWindow(driver);
 
         await driver.findClickableElement({ text: 'Confirm', tag: 'button' });
