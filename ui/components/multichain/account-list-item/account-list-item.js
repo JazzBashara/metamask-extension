@@ -50,7 +50,6 @@ import { MetaMetricsContext } from '../../../contexts/metametrics';
 import {
   getCurrentNetwork,
   getNativeCurrencyImage,
-  getOriginOfCurrentTab,
   getUseBlockie,
 } from '../../../selectors';
 import { useAccountTotalFiatBalance } from '../../../hooks/useAccountTotalFiatBalance';
