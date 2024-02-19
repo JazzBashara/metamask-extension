@@ -140,5 +140,5 @@ BadgeStatus.propTypes = {
   /**
    * Boolean to determine active status
    */
-  address: PropTypes.bool,
+  isActive: PropTypes.bool,
 };
